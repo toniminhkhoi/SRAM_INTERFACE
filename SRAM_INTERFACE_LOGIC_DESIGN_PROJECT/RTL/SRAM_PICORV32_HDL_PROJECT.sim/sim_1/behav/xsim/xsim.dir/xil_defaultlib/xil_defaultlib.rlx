@@ -1,0 +1,11 @@
+0.7
+2020.2
+Nov  8 2024
+22:36:57
+C:/Users/ACER/Downloads/picorv32.v,1763485044,verilog,,D:/SRAM_PICORV32_HDL_PROJECT/SRAM_PICORV32_HDL_PROJECT.srcs/sources_1/new/picorv32_sram.v,,picorv32;picorv32_axi;picorv32_axi_adapter;picorv32_pcpi_div;picorv32_pcpi_fast_mul;picorv32_pcpi_mul;picorv32_regs;picorv32_wb,,,,,,,,
+D:/SRAM_PICORV32_HDL_PROJECT/SRAM_PICORV32_HDL_PROJECT.sim/sim_1/behav/xsim/glbl.v,1724786425,verilog,,,,glbl,,,,,,,,
+D:/SRAM_PICORV32_HDL_PROJECT/SRAM_PICORV32_HDL_PROJECT.srcs/sim_1/new/tb.v,1764785872,verilog,,,,tb,,,,,,,,
+D:/SRAM_PICORV32_HDL_PROJECT/SRAM_PICORV32_HDL_PROJECT.srcs/sources_1/new/picorv32_sram.v,1764766409,verilog,,D:/SRAM_PICORV32_HDL_PROJECT/SRAM_PICORV32_HDL_PROJECT.srcs/sources_1/new/picorv32_top.v,,picorv32_sram,,,,,,,,
+D:/SRAM_PICORV32_HDL_PROJECT/SRAM_PICORV32_HDL_PROJECT.srcs/sources_1/new/picorv32_top.v,1764610826,verilog,,D:/SRAM_PICORV32_HDL_PROJECT/SRAM_PICORV32_HDL_PROJECT.srcs/sources_1/new/uart_rx.v,,picorv32_top,,,,,,,,
+D:/SRAM_PICORV32_HDL_PROJECT/SRAM_PICORV32_HDL_PROJECT.srcs/sources_1/new/uart_rx.v,1764783854,verilog,,D:/SRAM_PICORV32_HDL_PROJECT/SRAM_PICORV32_HDL_PROJECT.srcs/sources_1/new/uart_tx.v,,uart_rx,,,,,,,,
+D:/SRAM_PICORV32_HDL_PROJECT/SRAM_PICORV32_HDL_PROJECT.srcs/sources_1/new/uart_tx.v,1763785055,verilog,,D:/SRAM_PICORV32_HDL_PROJECT/SRAM_PICORV32_HDL_PROJECT.srcs/sim_1/new/tb.v,,uart_tx,,,,,,,,

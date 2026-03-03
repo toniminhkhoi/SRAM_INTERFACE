@@ -1,0 +1,21 @@
+Vivado Simulator v2024.2.0
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+Running: C:/Xilinx/Vivado/2024.2/bin/unwrapped/win64.o/xelab.exe --incr --debug typical --relax --mt 2 -L xil_defaultlib -L unisims_ver -L unimacro_ver -L secureip --snapshot tb_behav xil_defaultlib.tb xil_defaultlib.glbl -log elaborate.log 
+Using 2 slave threads.
+Starting static elaboration
+Pass Through NonSizing Optimizer
+WARNING: [VRFC 10-8967] first argument of $fatal is invalid; expected 0, 1 or 2 [D:/SRAM_PICORV32_HDL_PROJECT/SRAM_PICORV32_HDL_PROJECT.srcs/sim_1/new/tb.v:47]
+Completed static elaboration
+INFO: [XSIM 43-4329] Assuming default value 1 for the first arguement of $fatal at Line 47, File D:/SRAM_PICORV32_HDL_PROJECT/SRAM_PICORV32_HDL_PROJECT.srcs/sim_1/new/tb.v
+Starting simulation data flow analysis
+Completed simulation data flow analysis
+Time Resolution for simulation is 1ps
+Compiling module xil_defaultlib.picorv32_sram_default
+Compiling module xil_defaultlib.uart_tx_default
+Compiling module xil_defaultlib.uart_rx_default
+Compiling module xil_defaultlib.picorv32_default
+Compiling module xil_defaultlib.picorv32_top
+Compiling module xil_defaultlib.tb
+Compiling module xil_defaultlib.glbl
+Built simulation snapshot tb_behav
