@@ -1,6 +1,7 @@
 # SRAM Interface with RISC-V (PicoRV32) on FPGA
 
-An FPGA-based mini SoC integrating a lightweight **RISC-V core (PicoRV32, RV32I)** with a custom **SRAM controller (BRAM-backed)** and **MMIO peripherals (UART + LEDs)**.  
+An FPGA-based mini SoC integrating a lightweight **RISC-V core (PicoRV32, RV32I)** with a custom **SRAM controller (BRAM-backed)** and **MMIO peripherals (UART + LEDs)**.
+
 Demo flow: **PC sends a binary file over UART → firmware writes into SRAM → firmware reads back and sends bytes back to PC**, while LEDs show status.
 
 > Target role: Digital Design / FPGA / RTL Intern (Semiconductor)
@@ -24,25 +25,45 @@ Demo flow: **PC sends a binary file over UART → firmware writes into SRAM → 
 
 ## System Overview
 
-        +-------------------+
-        |     PicoRV32      |
-        |  (RISC-V RV32I)   |
-        +---------+---------+
-                  | mem_valid/mem_ready
-                  v
-        +-------------------+
-        |   MMIO / Decoder  |
-        | picorv32_mmio_bus |
-        +----+------+---+---+
-             |      |   |
-  SRAM (BRAM)|      |   | LED reg
-             |      |   |
-             v      v   v
-    +-----------+ +----+----+
-    | SRAM Ctrl  | | UART TX |
-    | 2-stage    | +---------+
-    | pipeline   | | UART RX |
-    +-----------+ +---------+
+### Diagram (Mermaid)
+> GitHub supports Mermaid. If your viewer doesn't, see the ASCII diagram below.
+
+```mermaid
+flowchart TD
+  CPU["PicoRV32<br/>RISC-V RV32I"]
+  DEC["MMIO / Decoder<br/>picorv32_mmio_bus"]
+  SRAM["SRAM Controller<br/>2-stage pipeline"]
+  BRAM["BRAM<br/>(SRAM data)"]
+  LED["LED Reg"]
+  UTX["UART TX"]
+  URX["UART RX"]
+
+  CPU -->|"mem_valid / mem_ready"| DEC
+  DEC --> SRAM
+  SRAM --> BRAM
+  DEC --> LED
+  DEC --> UTX
+  DEC --> URX
+```
+
+### ASCII (always works)
+```text
++-------------------+
+|     PicoRV32      |
+|  (RISC-V RV32I)   |
++---------+---------+
+          | mem_valid/mem_ready
+          v
++-------------------+
+|   MMIO / Decoder  |
+| picorv32_mmio_bus |
++----+------+---+---+
+     |      |   |
+     |      |   +--> LED reg (MMIO)
+     |      +------> UART TX/RX (MMIO)
+     |
+     +-----------> SRAM Ctrl (2-stage pipeline) -> BRAM (SRAM data)
+```
 
 ---
 
@@ -72,28 +93,28 @@ Demo flow: **PC sends a binary file over UART → firmware writes into SRAM → 
 
 > Adjust paths if your repo uses different names.
 
-
+```text
 SRAM_INTERFACE/
-rtl/ # Verilog RTL sources
-picorv32_top_refactored.v
-picorv32_mmio_bus.v
-picorv32_sram.v
-uart_rx.v
-uart_tx.v
-...
-firmware/ # RISC-V C firmware (UART -> SRAM -> UART)
-main.c
-linker.ld
-Makefile
-scripts/ # Python utilities
-make_mem.py # firmware.bin -> imem.mem
-uart_loopback.py # send file -> recv file via UART (pyserial)
-vivado/ # Vivado project/TCL + constraints (optional)
-project.tcl
-constraints.xdc
-docs/ # report / diagrams (optional)
-report.pdf
-
+  rtl/                 # Verilog RTL sources
+    picorv32_top_refactored.v
+    picorv32_mmio_bus.v
+    picorv32_sram.v
+    uart_rx.v
+    uart_tx.v
+    ...
+  firmware/            # RISC-V C firmware (UART -> SRAM -> UART)
+    main.c
+    linker.ld
+    Makefile
+  scripts/             # Python utilities
+    make_mem.py        # firmware.bin -> imem.mem
+    uart_loopback.py   # send file -> recv file via UART (pyserial)
+  vivado/              # Vivado project/TCL + constraints (optional)
+    project.tcl
+    constraints.xdc
+  docs/                # report / diagrams (optional)
+    report.pdf
+```
 
 ---
 
@@ -107,6 +128,8 @@ report.pdf
 - Toolchain:
   - **Vivado** (synthesis/implementation/bitstream)
 
+> Replace this line with your board name once you decide: **(e.g., Basys3 / Nexys A7 / Artix-7, etc.)**
+
 ### Software
 - **RISC-V GCC toolchain** (e.g., `riscv32-unknown-elf-gcc`)
 - **Python 3** + `pyserial`
@@ -114,128 +137,126 @@ report.pdf
 Install Python dependency:
 ```bash
 pip install pyserial
-Build & Run
-1) Build firmware (ELF/BIN)
+```
+
+---
+
+## Build & Run
+
+### 1) Build firmware (ELF/BIN)
+```bash
 cd firmware
 make
+```
 
 Typical outputs:
+- `firmware.elf`
+- `firmware.bin`
 
-firmware.elf
-
-firmware.bin
-
-2) Convert BIN → IMEM .mem
+### 2) Convert BIN → IMEM `.mem`
+```bash
 python3 scripts/make_mem.py firmware/firmware.bin rtl/imem.mem
+```
 
-Make sure your IMEM module loads the file:
+Make sure your IMEM module loads the file (path may vary):
+```verilog
+$readmemh("imem.mem", imem_array);
+```
 
-using $readmemh("imem.mem", ...) (path may vary)
+### 3) Synthesize & program FPGA (Vivado)
 
-3) Synthesize & program FPGA (Vivado)
+**Option A: open Vivado project** (if you have `.xpr`)
+- Open `vivado/*.xpr`
+- Set top module (e.g., `picorv32_top_refactored`)
+- Ensure constraints `.xdc` match your board pins (clk/reset/UART/LED)
+- Run **Synthesis → Implementation → Generate Bitstream**
+- Program device
 
-Option A: open Vivado project (if you have .xpr)
-
-Open vivado/*.xpr
-
-Check top module (e.g., picorv32_top_refactored)
-
-Ensure constraints .xdc match your board pins (clk/reset/UART/LED)
-
-Run Synthesis → Implementation → Generate Bitstream
-
-Program device
-
-Option B: use a TCL flow (if you keep project.tcl)
-
+**Option B: TCL flow** (if you keep `project.tcl`)
+```tcl
 # In Vivado TCL console
 source vivado/project.tcl
-4) UART loopback demo (PC ↔ FPGA)
+```
+
+### 4) UART loopback demo (PC ↔ FPGA)
 
 Find your serial port:
-
-Windows: COMx
-
-Linux: /dev/ttyUSB0 or /dev/ttyACM0
-
-macOS: /dev/tty.usbserial-*
+- Windows: `COMx`
+- Linux: `/dev/ttyUSB0` or `/dev/ttyACM0`
+- macOS: `/dev/tty.usbserial-*`
 
 Run:
-
+```bash
 python3 scripts/uart_loopback.py --port COM5 --baud 115200 --send test.bin --recv out.bin
+```
 
 Verify output:
-
+```bash
 # Linux/macOS
 cmp test.bin out.bin && echo "OK: identical"
 
 # Windows (PowerShell)
 fc /b test.bin out.bin
+```
 
 LEDs should show:
+- `0x55` at startup
+- `0xCC` after file received & written into SRAM
+- `0xAA` after file sent back to PC
 
-0x55 at startup
+---
 
-0xCC after file received & written into SRAM
+## How It Works (Short)
 
-0xAA after file sent back to PC
+### PicoRV32 handshake (`mem_valid` / `mem_ready`)
+- CPU asserts `mem_valid` for loads/stores.
+- Memory/peripheral asserts `mem_ready` when done.
+- If `mem_ready=0`, PicoRV32 **stalls automatically** → safe timing + simple peripherals.
 
-How It Works (Short)
-PicoRV32 handshake (mem_valid / mem_ready)
-
-CPU asserts mem_valid for loads/stores.
-
-Memory/peripheral asserts mem_ready when done.
-
-If mem_ready=0, PicoRV32 stalls automatically → safe timing + simple peripherals.
-
-SRAM controller (BRAM-backed, 2-stage pipeline)
-
+### SRAM controller (BRAM-backed, 2-stage pipeline)
 BRAM read is synchronous (data available next cycle), so the controller pipelines requests:
 
-Stage S1: latch request (addr/wdata/wstrb), hold mem_ready=0
-
-Stage S2: perform BRAM access, drive mem_rdata (for reads), pulse mem_ready=1 for one cycle
+- **Stage S1**: latch request (addr/wdata/wstrb), hold `mem_ready=0`
+- **Stage S2**: perform BRAM access, drive `mem_rdata` (for reads), pulse `mem_ready=1` for one cycle
 
 This aligns CPU reads with BRAM latency and prevents invalid read data.
 
-UART MMIO flow control
+### UART MMIO flow control
+- UART TX exposes a `busy` state.
+- When TX is busy, the MMIO keeps `mem_ready=0` → CPU stalls until TX is ready.
+- RX provides received bytes through an MMIO read (buffer/flag depending on your implementation).
 
-UART TX exposes a busy state.
+---
 
-When TX is busy, the MMIO keeps mem_ready=0 → CPU stalls until TX is ready.
+## Testing
 
-RX provides received bytes through an MMIO read (buffer/flag depending on your implementation).
+### Hardware demo
+- Program FPGA bitstream
+- Run UART loopback script
+- Confirm byte-perfect equality: `out.bin == test.bin`
 
-Testing
-Hardware demo
-
-Program FPGA bitstream
-
-Run UART loopback script
-
-Confirm byte-perfect equality: out.bin == test.bin
-
-Optional simulation (recommended)
-
+### Optional simulation (recommended)
 If you have a testbench:
+- Verify SRAM read latency + `mem_ready` alignment
+- Verify `mem_wstrb` write behavior
+- Inspect waveforms (xsim/iverilog + GTKWave)
 
-Verify SRAM read latency + mem_ready alignment
+---
 
-Verify mem_wstrb write behavior
+## Notes / Limitations
 
-Inspect waveforms (xsim/iverilog + GTKWave)
+- No cache (all data accesses go through SRAM controller / BRAM)
+- UART bandwidth limited by baud rate
+- Flow control is blocking via `mem_ready` (no interrupts)
 
-Notes / Limitations
+---
 
-No cache (all data accesses go through SRAM controller / BRAM)
+## Credits
 
-UART bandwidth limited by baud rate
+- PicoRV32 core by Clifford Wolf (if included in-source or as a dependency)
+- Project context: HCMUT Logic Design project — “SRAM Interface with RISC-V”
 
-Flow control is blocking via mem_ready (no interrupts)
+---
 
-Credits
-
-PicoRV32 core by Clifford Wolf (if included in-source or as a dependency)
-
-Project context: HCMUT Logic Design project — “SRAM Interface with RISC-V”
+## License
+Add your preferred license (MIT / Apache-2.0 / Educational use).
